@@ -10,6 +10,8 @@
 
 #define PRINT false
 
+std::vector<int> ch_list={1050};
+
 int main(int argc, char** argv)
 {
     
@@ -21,7 +23,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        file_name = std::string("/home/gabriel/Documents/protodune/data/VD/np02vd_raw_run039510_0000_df-s04-d0_dw_0_20250919T123428_myAnalyser.root");
+        file_name = std::string("/home/gabriel/Documents/protodune/data/VD/np02vd_raw_run039357_0000_df-s04-d0_dw_0_20250915T151645_myAnalyser.root");
     }
     TApplication app("app", &argc, argv);
     TFile *file = TFile::Open(file_name.c_str(), "READ");
@@ -59,27 +61,31 @@ int main(int argc, char** argv)
     for(int i=0;i<n;i++)
     {
         tree->GetEntry(i);
-        data->set_parameters(channel,time,*signal);
-        data->calc_baseline(50);
-        data->calc_noise(50);
-        data->calc_t0(45,200);
-        data->calc_tend(data->t0+15,1000);
-        data->calc_amplitude();
-        data->calc_integral();
-        data->calc_prompt(100);
-        //std::cout << signal->size() << std::endl;
-        tree_write->Fill();
-
-        if(PRINT)
+        if (std::find(ch_list.begin(), ch_list.end(), channel) != ch_list.end()) 
         {
-            
-            print_waveform(c,data,i);
-            std::cout << "Press ENTER para continuar, ou 'c' + ENTER para sair..." << std::endl;
-            std::string input;
-            std::getline(std::cin, input);
-            if (input == "c" || input == "C") 
+            data->set_parameters(channel,time,*signal);
+            data->calc_baseline(200);
+            data->calc_noise(200);
+            data->calc_t0(45,200);
+            data->calc_tend(data->t0+15,1000);
+            data->calc_amplitude(255,280);
+            data->calc_integral(255,280);
+            data->calc_prompt(100);
+            //std::cout << signal->size() << std::endl;
+            tree_write->Fill();
+
+       
+            if(PRINT)
             {
-                break; 
+                
+                print_waveform(c,data,i);
+                std::cout << "Press ENTER para continuar, ou 'c' + ENTER para sair..." << std::endl;
+                std::string input;
+                std::getline(std::cin, input);
+                if (input == "c" || input == "C") 
+                {
+                    break; 
+                }
             }
         }
     }

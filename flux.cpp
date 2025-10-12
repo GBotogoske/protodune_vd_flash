@@ -15,7 +15,7 @@
 
 int main(int argc, char** argv)
 {
-    int Channel = 2030;
+    int Channel = 2031;
 
     std::ifstream infile("../list_file.txt");
     std::string line;
@@ -26,7 +26,7 @@ int main(int argc, char** argv)
     }
    
     TApplication app("app", &argc, argv);
-    std::vector<double> EF = {0,10.0/360,80.0/360,155.7/360};
+    std::vector<double> EF = {0,80.0/360,155.7/360};
     // --- histogramas ---
     TCanvas* c = new TCanvas("c", "Histogramas", 800, 600);
     auto legend = new TLegend(0.65, 0.7, 0.9, 0.9);
@@ -77,16 +77,18 @@ int main(int argc, char** argv)
         }
         long deltaT=(max_t-min_t)*16e-9;
         h->Scale(1.0/deltaT);
+        //h->Scale(1.0/h->GetEntries());
 
-        std::cout << "Total Rate for " << EF[k] << " kV/cm " << h->Integral() <<  " events/s" << std::endl;
+        std::cout << "Total Rate for " << EF[k] << " kV/cm " << h->Integral() <<  " events/s -- " << "Mean "<< h->GetMean() << std::endl;
 
         if(k==0)
         {
-            h->Draw();
+            h->Draw("HIST");
+            h->SetMaximum(h->GetMaximum()*2);       // primeira vez
         }
         else
         {
-            h->Draw("SAME");
+            h->Draw("HIST SAME");   // sobreposição       
         }
         legend->AddEntry(h, h->GetName(), "l");   
     }

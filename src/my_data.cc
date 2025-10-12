@@ -109,23 +109,24 @@ void my_data::calc_t0(const int index,const int index_lim)
 void my_data::calc_tend(const int index, const int index_lim)
 {
     float threshold = this->baseline + 5 * this->noise;
-
-    for (int i = index + 1; i < index_lim ; ++i) 
+    if(index>0)
     {
-        if (this->adcs[i] < threshold && this->adcs[i - 1] >= threshold) 
+        for (int i = index + 1; i < index_lim ; ++i) 
         {
-            
-            float x1 = (i - 1);
-            float y1 = this->adcs[i - 1];
-            float x2 = i;
-            float y2 = this->adcs[i];
-            float m = (float)((y2 - y1) / (x2 - x1));
-            float tend = x1 + (float)((threshold - y1) / m);
-            this->tend = tend;
-            return;
+            if (this->adcs[i] < threshold && this->adcs[i - 1] >= threshold) 
+            {
+                
+                float x1 = (i - 1);
+                float y1 = this->adcs[i - 1];
+                float x2 = i;
+                float y2 = this->adcs[i];
+                float m = (float)((y2 - y1) / (x2 - x1));
+                float tend = x1 + (float)((threshold - y1) / m);
+                this->tend = tend;
+                return;
+            }
         }
     }
-
     this->tend = -1000; //error
     return; 
 }
@@ -140,6 +141,25 @@ void my_data::calc_integral()
             int start = (int)this->t0;
             int end = (int)this->tend;
 
+            for(int i = start; i<=end ; i++)
+            {
+                this->integral+=(this->adcs[i]-this->baseline);
+            }
+            return;
+
+        }
+    }
+    this->integral=-1000;
+    return;
+}
+
+void my_data::calc_integral(int start, int end)
+{
+     this->integral = 0;
+    if(start != -1000 && end != -1000)
+    {
+        if(end >= start)
+        {
             for(int i = start; i<=end ; i++)
             {
                 this->integral+=(this->adcs[i]-this->baseline);
@@ -172,6 +192,30 @@ void my_data::calc_amplitude()
             }
         }
     }
+    return;
+}
+
+void my_data::calc_amplitude(int start, int end)
+{
+    this->amplitude = -1000;
+    if(start != -1000 && end != -1000)
+    {
+        if(end >= start)
+        {
+
+            for(int i = start; i<=end ; i++)
+            {
+                double value = this->adcs[i]-this->baseline;
+                if(this->amplitude < value)
+                {
+                    this->amplitude = value;
+                }
+            }
+        }
+    }
+    return;
+
+
     return;
 }
 

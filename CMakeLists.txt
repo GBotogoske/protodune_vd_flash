@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(PDS_Analysis)
 
 # ROOT
-find_package(ROOT REQUIRED COMPONENTS Core Tree RIO Hist)
+find_package(ROOT REQUIRED COMPONENTS Core Tree RIO Hist Minuit)
 include(${ROOT_USE_FILE})
 
 set(CMAKE_CXX_STANDARD 17)
@@ -36,8 +36,18 @@ add_executable(flash flash.cpp)
 target_include_directories(flash PRIVATE ${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
 target_link_libraries(flash PRIVATE ${ROOT_LIBRARIES} my_data)
 
-# Executável flash
+# Executável filter_flash
 add_executable(filter_flash filter_flash.cpp)
 target_include_directories(filter_flash PRIVATE ${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
 target_link_libraries(filter_flash PRIVATE ${ROOT_LIBRARIES} my_data)
+
+# Executável run_spe
+add_executable(run_spe main_spe.cpp)
+target_include_directories(run_spe PRIVATE ${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
+target_link_libraries(run_spe PRIVATE ${ROOT_LIBRARIES} my_data)
+
+# Executável fit_spe
+add_executable(fit_spe fit_spe.cpp)
+target_include_directories(fit_spe PRIVATE ${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
+target_link_libraries(fit_spe PRIVATE ${ROOT_LIBRARIES} my_data)
 #..........................................................................

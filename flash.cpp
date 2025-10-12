@@ -106,8 +106,8 @@ int main(int argc, char** argv)
                 data->set_parameters(hits[end].channel, hits[end].time, hits[end].adc);             
                 data->calc_baseline(50);
                 data->calc_noise(50);
-                data->calc_t0(45, 120);
-                data->calc_tend(400, 1000);
+                data->calc_t0(45,200);
+                data->calc_tend(data->t0+15,1000);
                 data->calc_amplitude();
                 data->calc_integral();
                 data->calc_prompt(100);

@@ -67,3 +67,54 @@ void print_waveform(TCanvas* c, my_data* data, int i)
     delete g;
 
 }
+
+
+bool intersect_two(const Peak& a, const Peak& b, double& xstar)
+{
+    // garante mu_a < mu_b
+    Peak left=a, right=b;
+    if (left.mu > right.mu) std::swap(left,right);
+
+    const double sa2 = left.s*left.s;
+    const double sb2 = right.s*right.s;
+
+    const double R = (right.A/right.s) / (left.A/left.s); // (A_j/σ_j)/(A_i/σ_i)
+    const double lnR = std::log(R);
+
+    const double eps = 1e-12;
+    const double Acoef = (1.0/sb2) - (1.0/sa2);
+    const double Bcoef = (-2.0*right.mu/sb2) + (2.0*left.mu/sa2);
+    const double Ccoef = (right.mu*right.mu/sb2) - (left.mu*left.mu/sa2) - 2.0*lnR;
+
+    if (std::fabs(Acoef) < eps) {
+        // σ_i ≈ σ_j → solução linear
+        // x*(μ_i-μ_j) + (μ_j^2-μ_i^2)/2 - σ^2 lnR = 0, com σ^2 ≈ sa2 ≈ sb2
+        double s2 = 0.5*(sa2+sb2);
+        double denom = (left.mu - right.mu);
+        if (std::fabs(denom) < eps) return false; // meios praticamente iguais
+        xstar = ( (left.mu*left.mu - right.mu*right.mu) + 2.0*s2*lnR ) / (2.0*denom);
+    } else {
+        // solução quadrática
+        double disc = Bcoef*Bcoef - 4.0*Acoef*Ccoef;
+        if (disc < 0) return false; // sem raiz real
+        double sqrtD = std::sqrt(std::max(0.0,disc));
+        double x1 = (-Bcoef + sqrtD)/(2.0*Acoef);
+        double x2 = (-Bcoef - sqrtD)/(2.0*Acoef);
+        // escolha a raiz entre os centros
+        double lo = left.mu, hi = right.mu;
+        bool in1 = (x1 >= lo && x1 <= hi);
+        bool in2 = (x2 >= lo && x2 <= hi);
+        if (in1 && !in2) xstar = x1;
+        else if (!in1 && in2) xstar = x2;
+        else if (in1 && in2) {
+            // ambas dentro: pegue a mais próxima do meio
+            double mid = 0.5*(lo+hi);
+            xstar = (std::fabs(x1-mid) < std::fabs(x2-mid)) ? x1 : x2;
+        } else {
+            // nenhuma dentro: pegue a mais próxima do intervalo (opcional) ou sinalize falha
+            double mid = 0.5*(lo+hi);
+            xstar = (std::fabs(x1-mid) < std::fabs(x2-mid)) ? x1 : x2;
+        }
+    }
+    return true;
+}

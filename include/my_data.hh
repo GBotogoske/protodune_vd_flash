@@ -39,7 +39,9 @@ class my_data: public TObject
         void calc_tend(const int index,const int index_lim);
         
         void calc_integral();
+        void calc_integral(int start,int end);
         void calc_amplitude();
+        void calc_amplitude(int start,int end);
         void calc_prompt(const int index);
 
         ClassDef(my_data, 1);

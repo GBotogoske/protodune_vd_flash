@@ -18,7 +18,7 @@ typedef struct
     int n_ch=0;
 }my_Flash;
 
-std::vector<int> list_channel = {1010};
+std::vector<int> list_channel = {1050,1051,1060,1061,1070,1071,1080,1081,2030,2031,2040,2041,2080,2081};
 
 int main(int argc, char** argv)
 {
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     } 
     else 
     {
-        file_name = std::string("data_analysed_flash.root");
+        file_name = std::string("data_analysed_flash_39510.root");
     }
 
     std::map<int,my_Flash> my_map;
@@ -87,10 +87,11 @@ int main(int argc, char** argv)
 
         if (all_found)
         {
-            std::cout << "oi\n" ;
+            //std::cout << "um flash\n ";
             for (int j = 0; j < flash.data.size(); j++)
             {
                 *data_2=flash.data[j];
+                //std::cout<<flash.data[j].Timestamp << std::endl;
                 tree_write->Fill();
             }
         }
