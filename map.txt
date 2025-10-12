@@ -1,0 +1,12 @@
+Membrana                      Catodo                      Membrana
+Top                C1,C2,C3,C4 --- C5,C6,C7,C8             Top  
+--M1                                                       --M3   
+--M2                                                       --M4  
+--M5                                                       --M7  
+--M6                                                       --M8   
+Bottom                                                     Bottom
+
+LArsoft code: Y0NX 
+Y: 1 for C , 2 for M
+N: for membrane or cathode module number
+X:Arapuca channel ( 0 or 1)
