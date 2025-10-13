@@ -34,6 +34,7 @@ class my_data: public TObject
         void print_all();
 
         void calc_baseline(const int index);
+        void calc_baseline(const int index1,const int index2,const int index3,const int index4);
         void calc_noise(const int index);
         void calc_t0(const int index,const int index_lim);
         void calc_tend(const int index,const int index_lim);

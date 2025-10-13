@@ -9,24 +9,47 @@
 #include <TGraph.h>
 #include <TAxis.h>
 
-
 #include <utils.hh>
 #include <my_data.hh>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 std::vector<int> list_channel = {1050,1051,1060,1061,1070,1071,1080,1081,2030,2031,2040,2041,2080,2081};
 
 int main(int argc, char** argv)
 {
     std::string file_name;
-    if(argc > 1)
+    std::string base_dir = "/home/gabriel/Documents/protodune/data/VD/";
+    std::string run_number = "null";
+
+    if (argc > 1) 
     {
-        file_name = std::string(argv[1]);
-        std::cout << file_name << std::endl;
-    }
-    else
+        bool run_found = false;
+        for (int i = 1; i < argc; ++i)
+        {
+            std::string arg = argv[i];
+            if (arg == "-run" && i + 1 < argc)
+            {
+                run_number = argv[i + 1];
+                run_found = true;
+                break;
+            }
+        }
+        if(run_found)
+        {
+            file_name=search_file(base_dir,run_number,std::string("_flash_filtered.root"));
+        }
+        else
+        {
+            file_name = std::string(argv[1]);
+        }
+    } 
+    else 
     {
-        file_name = std::string("data_analysed_flash_filtered_39510.root");
+        file_name = std::string("/home/gabriel/Documents/protodune/data/VD/np02vd_raw_run039510_0000_df-s04-d0_dw_0_20250919T123428_myAnalyser.root");
     }
+    std::cout << file_name << std::endl;
+
 
     TFile *file = TFile::Open(file_name.c_str(), "READ");
     if (!file || file->IsZombie()) 
@@ -44,8 +67,9 @@ int main(int argc, char** argv)
     std::cout << "O arquivo contem " << n << " entradas\n";
 
     std::map<int,int> ch_map;
-    std::map<int,int> norm_ch;
     int n_ch=list_channel.size();
+    std::vector<double> norm_ch(n_ch, 0.0); 
+    
     for(int i=0;i<n_ch;i++)
     {
         ch_map[list_channel[i]]=i;
@@ -95,6 +119,17 @@ int main(int argc, char** argv)
         }
     }
 
+    std::string out_base_dir;
+    if (run_number == "null")
+    {
+        out_base_dir = "../waveforms/" + fs::path(file_name).filename().string();
+    }
+    else
+    {
+        out_base_dir = "../waveforms/" + run_number;
+    }
+    
+    fs::create_directory(out_base_dir);
     for(int i=0; i<n_ch; i++)
     {
         TCanvas* c = new TCanvas("c", "Waveforms", 800, 600);
@@ -106,10 +141,10 @@ int main(int argc, char** argv)
         g->GetYaxis()->SetTitle("Amplitude (ADC)");
         g->Draw("AL");
 
-        std::string fig_name = Form("../waveforms/waveform_%d.png", ch);
+        std::string fig_name = out_base_dir+ Form("/waveform_%d.png", ch);
         c->SaveAs(fig_name.c_str());
 
-        std::ofstream fout(Form("../waveforms/waveform_%d.txt", ch));
+        std::ofstream fout(out_base_dir+Form("/waveform_%d.txt", ch));
         for (int k = 0; k < 1024; k++)
         {
             fout << x[k] << "\t" << signals[i][k] << "\n";

@@ -15,7 +15,7 @@
 #include <my_data.hh>
 #include <utils.hh>
 
-int Npeaks = 6;
+int Npeaks = 5;
 bool calc_Intersection = true;
 
 TH1D* hdata = nullptr;
@@ -70,25 +70,65 @@ void fcn(Int_t& npar, Double_t* grad, Double_t& fval, Double_t* par, Int_t flag)
 
 int main(int argc, char** argv)
 {
-    std::string filename = "/home/gabriel/Documents/protodune/protodune_vd/light_analysis/build/data_analysed.root";
-    TFile* file1 = TFile::Open(filename.c_str(),"READ");
+    std::string file_name;
+    std::string base_dir = "/home/gabriel/Documents/protodune/data/VD/";
+    std::string run_number = "null";
+
+    std::string this_ch="39215";
+
+    if (argc > 1) 
+    {
+        bool run_found = false;
+        for (int i = 1; i < argc; ++i)
+        {
+            std::string arg = argv[i];
+            if (arg == "-ch" && i + 1 < argc)
+            {
+                this_ch = argv[i + 1];
+                run_number = get_map_spe2()[this_ch];
+                run_found = true;
+                break;
+            }
+        }
+        if(run_found)
+        {
+            file_name=search_file(base_dir,run_number,std::string("_spe.root"));
+        }
+        else
+        {
+            file_name = std::string(argv[1]);
+        }
+    } 
+    else 
+    {
+        file_name = std::string("/home/gabriel/Documents/protodune/data/VD/np02vd_raw_run039357_0000_df-s04-d0_dw_0_20250915T151645_myAnalyser.root");
+    }
+
+    std::cout << "FILE NAME: " << file_name << std::endl;
+    std::cout << "RUN: " << run_number << std::endl;
+    std::cout << "CH: " << this_ch << std::endl;
+
+    TFile* file1 = TFile::Open(file_name.c_str(),"READ");
     TTree* tree1 = (TTree*)file1->Get("T1");
     my_data* data = nullptr;
 
     TApplication app("app", &argc, argv);
-
     tree1->SetBranchAddress("Data", &data);
+    TH1D* hist = new TH1D("hist","hist",200,-280,1500);
 
-    TH1D* hist = new TH1D("hist","hist",200,-280,2100);
+    int my_channel = std::stoi(this_ch);
     for(int i = 0; i < tree1->GetEntries(); ++i)
     {
         tree1->GetEntry(i);
-        if(data->baseline>4100 && data->baseline<4700 && data->noise<7.5)
-            hist->Fill(data->integral);
+        if (data->Channel==my_channel)
+        {
+            if(data->baseline>4000 && data->baseline<5000 && data->noise<10)
+                hist->Fill(data->integral);
+        }
+       
     }
     hist->Sumw2();
     hdata = hist;
-
     xmin = hist->GetXaxis()->GetXmin();
     xmax = hist->GetXaxis()->GetXmax();
 
@@ -126,8 +166,8 @@ int main(int argc, char** argv)
         if(i==0)
         {
             minuit.DefineParameter(0, Form("Amp_%d",i),  p[0], step, 1000, 40000);
-            minuit.DefineParameter(1, Form("Mean_%d",i), p[1], step, -200, 10);
-            minuit.DefineParameter(2, Form("Std_%d",i),  p[2], step, 50, 120);
+            minuit.DefineParameter(1, Form("Mean_%d",i), p[1], step, -500, 10);
+            minuit.DefineParameter(2, Form("Std_%d",i),  p[2], step, 50, 200);
         }
         else if(i==1)
         {
@@ -151,14 +191,9 @@ int main(int argc, char** argv)
     {
         minuit.GetParameter(i, p_fit[i], e_fit[i]);
     }
-      
-
     TF1* ffit = new TF1("ffit",[](double* x, double* p){ return model(x, p); },xmin, xmax, npars);    
     ffit->SetParameters(p_fit.data());
-
     TCanvas* c1 = new TCanvas("c1","Multi-Gaussian Fit",900,600);
-    //hist->SetMarkerStyle(20);
-    //hist->SetMarkerSize(0.7);
     hist->SetTitle("Multi-Gaussian Fit;Integral [ADC];Entries");
     hist->Draw("");
     ffit->SetLineColor(kRed);
@@ -170,9 +205,7 @@ int main(int argc, char** argv)
 
     for (int i = 0; i < Npeaks; ++i)
     {
-        // cria nome único pra cada gaussiana
-        TString name = Form("gaus_%d", i);
-        
+        TString name = Form("gaus_%d", i);   
         TF1* fgaus = nullptr;
 
         if(i==0)

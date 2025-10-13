@@ -10,6 +10,9 @@
 
 #include <iostream>
 #include <string>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 void print_waveform(TCanvas* c, my_data* data, int i)
 {
@@ -68,6 +71,28 @@ void print_waveform(TCanvas* c, my_data* data, int i)
 
 }
 
+std::string search_file(std::string path, std::string run,std::string find)
+{
+    std::string file_name;
+    if (!run.empty())
+    {
+       
+        bool found = false;
+        // Percorre todos os arquivos na pasta procurando o run desejado
+        for (const auto& entry : fs::directory_iterator(path))
+        {
+            std::string fname = entry.path().filename().string();
+            if (fname.find(run) != std::string::npos && fname.find(find) != std::string::npos)
+            {
+                file_name = entry.path().string();
+                found = true;
+                break;
+            }
+        }
+
+    }
+    return file_name;
+}
 
 bool intersect_two(const Peak& a, const Peak& b, double& xstar)
 {
@@ -117,4 +142,41 @@ bool intersect_two(const Peak& a, const Peak& b, double& xstar)
         }
     }
     return true;
+}
+
+std::map<std::string, std::vector<int>> get_map_spe()
+{
+    std::map<std::string, std::vector<int>> this_map;
+    this_map["39357"] = std::vector<int>{1050,1051};
+    this_map["39358"] = std::vector<int>{1060};
+    this_map["39359"] = std::vector<int>{1061};
+    this_map["39360"] = std::vector<int>{1070,1071,2030,2031,2040,2041};
+    this_map["39361"] = std::vector<int>{1080,1081};
+    this_map["39365"] = std::vector<int>{2070,2071};
+    this_map["39366"] = std::vector<int>{2080,2081};
+
+    return this_map;
+
+}
+
+std::map<std::string,std::string> get_map_spe2()
+{
+    std::map<std::string,std::string> this_map;
+    this_map["1050"]="39357";
+    this_map["1051"]="39357";
+    this_map["1060"]="39358";
+    this_map["1061"]="39359";
+    this_map["1070"]="39360";
+    this_map["1071"]="39360";
+    this_map["1080"]="39361";
+    this_map["1081"]="39361";
+    this_map["2030"]="39360";
+    this_map["2031"]="39360";
+    this_map["2040"]="39360";
+    this_map["2041"]="39360";
+    this_map["2070"]="39365";
+    this_map["2071"]="39365";
+    this_map["2080"]="39366";
+    this_map["2071"]="39366";
+    return this_map;
 }

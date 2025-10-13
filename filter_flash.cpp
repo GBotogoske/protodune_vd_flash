@@ -10,6 +10,8 @@
 
 #include <utils.hh>
 #include <my_data.hh>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 
 typedef struct 
@@ -23,15 +25,36 @@ std::vector<int> list_channel = {1050,1051,1060,1061,1070,1071,1080,1081,2030,20
 int main(int argc, char** argv)
 {
     std::string file_name;
+    std::string base_dir = "/home/gabriel/Documents/protodune/data/VD/";
+    std::string run_number = "null";
+
     if (argc > 1) 
     {
-        file_name = std::string(argv[1]);
-        std::cout << file_name << std::endl;
+        bool run_found = false;
+        for (int i = 1; i < argc; ++i)
+        {
+            std::string arg = argv[i];
+            if (arg == "-run" && i + 1 < argc)
+            {
+                run_number = argv[i + 1];
+                run_found = true;
+                break;
+            }
+        }
+        if(run_found)
+        {
+            file_name=search_file(base_dir,run_number,std::string("_flash.root"));
+        }
+        else
+        {
+            file_name = std::string(argv[1]);
+        }
     } 
     else 
     {
-        file_name = std::string("data_analysed_flash_39510.root");
+        file_name = std::string("/home/gabriel/Documents/protodune/data/VD/np02vd_raw_run039510_0000_df-s04-d0_dw_0_20250919T123428_myAnalyser.root");
     }
+    std::cout << file_name << std::endl;
 
     std::map<int,my_Flash> my_map;
 
@@ -51,7 +74,17 @@ int main(int argc, char** argv)
         file->Close();
     }
 
-    TFile* newfile = TFile::Open("data_analysed_flash_filtered.root", "RECREATE");
+    std::string file_output;
+    if(run_number.compare("null"))
+    {
+        file_output = fs::path(file_name).replace_extension("").string() + "_filtered.root";
+    }
+    else
+    {   
+        file_output="data_analysed_" + run_number + "_flash_filtered.root";
+    }
+
+    TFile* newfile = TFile::Open(file_output.c_str(), "RECREATE");
     auto* tree_write = new TTree("T1", "data");
     auto* data_2 = new my_data();
     tree_write->Branch("Data", "my_data", &data_2);

@@ -71,6 +71,23 @@ void my_data::calc_baseline(const int index)
     this->baseline/=index;
 }
 
+void my_data::calc_baseline(const int index1, const int index2, const int index3, const int index4)
+{
+    this->baseline=0;
+    int cont=0;
+    for(int i = index1; i<index2; i++)
+    {
+        this->baseline+=this->adcs[i];
+        cont++;
+    }
+    for(int i = index3; i<index4; i++)
+    {
+        this->baseline+=this->adcs[i];
+        cont++;
+    }
+    this->baseline/=cont;
+}
+
 void my_data::calc_noise(const int index)
 {
     this->noise = 0;
