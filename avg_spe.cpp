@@ -13,6 +13,7 @@
 namespace fs = std::filesystem;
 
 #include <utils.hh>
+#include <readConfigFit.hh>
 #include <my_data.hh>
 
 //channel default to calculate spe
@@ -26,8 +27,9 @@ int main(int argc, char** argv)
     //home folder
     std::string base_dir = "/home/gabriel/Documents/protodune/data/VD/";
     std::string run_number = "null";
-    std::string this_ch="39215";
+    std::string this_ch="-1";
 
+    readConfigFit* fitConfig = nullptr;
     if (argc > 1) 
     {
         bool run_found = false;
@@ -45,15 +47,19 @@ int main(int argc, char** argv)
         if(run_found)
         {
             file_name=search_file(base_dir,run_number,std::string("_spe.root"));//abre o arquivo adequado
+            fitConfig = new readConfigFit(std::stoi(this_ch));
         }
         else
         {
             file_name = std::string(argv[1]);
+            fitConfig = new readConfigFit(-1);
+
         }
     } 
     else 
     {
         file_name = std::string("/home/gabriel/Documents/protodune/data/VD/np02vd_raw_run039357_0000_df-s04-d0_dw_0_20250915T151645_myAnalyser.root");
+        fitConfig = new readConfigFit(-1);
     }
 
     std::cout << "FILE NAME: " << file_name << std::endl;
@@ -87,7 +93,25 @@ int main(int argc, char** argv)
     my_data* data = nullptr;
     tree->SetBranchAddress("Data", &data);
     int my_channel = std::stoi(this_ch);
+    float baseline_min = fitConfig->getParam("baseline_min");
+    float baseline_max = fitConfig->getParam("baseline_max");
+    float noise_max = fitConfig->getParam("noise_max");
 
+    //recarrega as seperations automaticamente:
+    if(my_channel!=-1)
+    {
+        separation.clear();
+        std::string file_sep = Form("/home/gabriel/Documents/protodune/protodune_vd/light_analysis/data/FIT_SPE/%d.txt",my_channel);             
+        double s;
+        std::ifstream data_sp(file_sep);
+        while(data_sp >> s)
+        {
+            std::cout << "Separation: " << s << std::endl;
+            separation.push_back(s);
+        }
+        data_sp.close();
+    }
+            
     //varre o arquivo buscando o cnaal correto
     for(int i = 0; i < tree->GetEntries(); i++) 
     {
@@ -96,7 +120,7 @@ int main(int argc, char** argv)
        
         if (data->Channel==my_channel)
         {
-            if(data->baseline>4000 && data->baseline<5000 && data->noise<10) // && data->amplitude<100)
+            if(data->baseline>baseline_min && data->baseline<baseline_max && data->noise<noise_max) // && data->amplitude<100)
             {
                 double integral=data->integral;
                 if(!(integral<separation[0] || integral>separation[separation.size()-1]))//garante o numero do pico photon eletron aqui
@@ -116,11 +140,8 @@ int main(int argc, char** argv)
                         signal[k] += (data->adcs[k] - data->baseline);
                     }
                 }
-            }
-                
-        }
-            
-               
+            }    
+        }         
     }
 
     file->Close();

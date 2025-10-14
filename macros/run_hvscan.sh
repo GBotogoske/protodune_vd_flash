@@ -12,7 +12,7 @@ do
     # Remove arquivos *_filtered.root que contenham o número da run
     rm /home/gabriel/Documents/protodune/data/VD/*"${i}"_flash.root
     
-    ../build//avg -run "$i"
+    ../build/avg -run "$i"
     
     echo ">>> Run $i concluída"
     echo "-----------------------------"

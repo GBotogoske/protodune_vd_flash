@@ -12,7 +12,9 @@
 #include <TLatex.h>
 
 #include <iostream>
+#include <fstream>
 #include <my_data.hh>
+#include <readConfigFit.hh>
 #include <utils.hh>
 
 
@@ -78,9 +80,9 @@ int main(int argc, char** argv)
     //base diretorio
     std::string base_dir = "/home/gabriel/Documents/protodune/data/VD/";
     std::string run_number = "null";
-
     std::string this_ch="39215";
-
+    
+    readConfigFit* fitConfig = nullptr;
     if (argc > 1) 
     {
         bool run_found = false;
@@ -98,20 +100,25 @@ int main(int argc, char** argv)
         if(run_found)
         {
             file_name=search_file(base_dir,run_number,std::string("_spe.root")); // abre o arquivo
+            fitConfig = new readConfigFit(std::stoi(this_ch));
         }
         else
         {
             file_name = std::string(argv[1]);
+            fitConfig = new readConfigFit(-1);
         }
     } 
     else 
     {
         file_name = std::string("/home/gabriel/Documents/protodune/data/VD/np02vd_raw_run039357_0000_df-s04-d0_dw_0_20250915T151645_myAnalyser.root");
+        fitConfig = new readConfigFit(-1);
     }
 
     std::cout << "FILE NAME: " << file_name << std::endl;
     std::cout << "RUN: " << run_number << std::endl;
     std::cout << "CH: " << this_ch << std::endl;
+
+    fitConfig->print();
 
     //abre o arquivo
     TFile* file1 = TFile::Open(file_name.c_str(),"READ");
@@ -123,17 +130,27 @@ int main(int argc, char** argv)
     TApplication app("app", &argc, argv);
     //aponta variavel de leitura ao branch correto do arquivo aberto
     tree1->SetBranchAddress("Data", &data);
+
+    Npeaks = (int) fitConfig->getParam("Npeaks");
+    int min_bin = (int) fitConfig->getParam("fit_min");
+    int max_bin = (int) fitConfig->getParam("fit_max");
+    int bins = (int) fitConfig->getParam("bins");
+
     //cria histograma
-    TH1D* hist = new TH1D("hist","hist",200,-280,1500);
+    TH1D* hist = new TH1D("hist","hist",bins,min_bin,max_bin);
 
     int my_channel = std::stoi(this_ch);
+    float baseline_min = fitConfig->getParam("baseline_min");
+    float baseline_max = fitConfig->getParam("baseline_max");
+    float noise_max = fitConfig->getParam("noise_max");
+
     //preenche histograma com as variaveis adequadas e canal correto
     for(int i = 0; i < tree1->GetEntries(); ++i)
     {
         tree1->GetEntry(i);
         if (data->Channel==my_channel)
         {
-            if(data->baseline>4000 && data->baseline<5000 && data->noise<10)
+            if(data->baseline>baseline_min && data->baseline<baseline_max && data->noise<noise_max)
                 hist->Fill(data->integral);
         }
     }
@@ -162,49 +179,57 @@ int main(int argc, char** argv)
 
     //define os parametros inicias
     std::vector<double> p(npars); //A0,mean0,std0,meanspe,A1,sigma1,A2,sigma2....
-    std::vector<double> A_i = {7700, 150, 100, 100,100,100};
+    std::vector<double> A_i;
+    for(int i=0;i<Npeaks;i++)
+    {
+        A_i.push_back(fitConfig->getParam(Form("A%d",i)));
+    }
+    double mean0=fitConfig->getParam("mean0");
+    double meanspe=fitConfig->getParam("meanspe");
+    double std0=fitConfig->getParam("std0");
+    double std1=fitConfig->getParam("std1");
     for(int i=0;i<Npeaks;i++)
     {
         if(i==0)
         {
             p[0]=A_i[i];
-            p[1]=0;
-            p[2]=200;
+            p[1]=mean0;
+            p[2]=std0;
         
         }
         else if(i==1)
         {
-            p[3]=400;
+            p[3]=meanspe;
             p[4]=A_i[i];
-            p[5]=200;
+            p[5]=std1;
         }
         else
         {
             p[6+2*(i-2)]=A_i[i];
-            p[6+2*(i-2)+1]=200*sqrt(i);
+            p[6+2*(i-2)+1]=std1*sqrt(i);
         }        
     }
 
     //defeni os parametros inicias, steps e valores maximo e minimos    
-    double step=0.1;
+    double step=fitConfig->getParam("step");
     for(int i=0;i<Npeaks;i++)
     {
         if(i==0)
         {
-            minuit.DefineParameter(0, Form("Amp_%d",i),  p[0], step, 1000, 40000);
-            minuit.DefineParameter(1, Form("Mean_%d",i), p[1], step, -500, 10);
-            minuit.DefineParameter(2, Form("Std_%d",i),  p[2], step, 50, 200);
+            minuit.DefineParameter(0, Form("Amp_%d",i),  p[0], step, fitConfig->getParam("A0min"), fitConfig->getParam("A0max"));
+            minuit.DefineParameter(1, Form("Mean_%d",i), p[1], step,  fitConfig->getParam("mean0min"), fitConfig->getParam("mean0max"));
+            minuit.DefineParameter(2, Form("Std_%d",i),  p[2], step, fitConfig->getParam("std0min"), fitConfig->getParam("std0max"));
         }
         else if(i==1)
         {
-            minuit.DefineParameter(3, Form("Mean_%d",i), p[3], step, 100, 700);
-            minuit.DefineParameter(4, Form("Amp_%d",i),  p[4], step, 0, 0);
-            minuit.DefineParameter(5, Form("Std_%d",i),  p[5], step, 0, 0);
+            minuit.DefineParameter(3, Form("Mean_%d",i), p[3], step, fitConfig->getParam("mean1min"), fitConfig->getParam("mean1max"));
+            minuit.DefineParameter(4, Form("Amp_%d",i),  p[4], step, fitConfig->getParam("A1min"), fitConfig->getParam("A1max"));
+            minuit.DefineParameter(5, Form("Std_%d",i),  p[5], step, fitConfig->getParam("std1min"), fitConfig->getParam("std1max"));
         }
         else
         {
-            minuit.DefineParameter(6+2*(i-2), Form("Amp_%d",i),  p[4+2*(i-1)], step, 0, 0);
-            minuit.DefineParameter(6+2*(i-2)+1, Form("Std_%d",i),  p[4+2*(i-1)], step, 0, 0);
+            minuit.DefineParameter(6+2*(i-2), Form("Amp_%d",i),  p[4+2*(i-1)], step, fitConfig->getParam("Anmin"), fitConfig->getParam("Anmax"));
+            minuit.DefineParameter(6+2*(i-2)+1, Form("Std_%d",i),  p[4+2*(i-1)], step, fitConfig->getParam("stdnmin"), fitConfig->getParam("stdnmax"));
         }     
    
     }
@@ -345,9 +370,16 @@ int main(int argc, char** argv)
             }
         }
 
+
+        std::ofstream output_file(Form("/home/gabriel/Documents/protodune/protodune_vd/light_analysis/data/FIT_SPE/%d.txt", std::stoi(this_ch)));
         std::cout << "\nInterseções vizinhas (x*):\n";
         for (int i = 0; i < (int)xcuts.size(); ++i)
+        {
+            output_file << xcuts[i] << "\n";
             std::cout << "Peak " << i << " | " << (i+1) << " : x* = " << xcuts[i] << "\n";
+        }
+        c1->SaveAs(Form("/home/gabriel/Documents/protodune/protodune_vd/light_analysis/data/FIT_SPE/%d.png", std::stoi(this_ch)));
+        output_file.close();
     }
 
 
