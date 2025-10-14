@@ -177,6 +177,6 @@ std::map<std::string,std::string> get_map_spe2()
     this_map["2070"]="39365";
     this_map["2071"]="39365";
     this_map["2080"]="39366";
-    this_map["2071"]="39366";
+    this_map["2081"]="39366";
     return this_map;
 }
