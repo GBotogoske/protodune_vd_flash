@@ -117,7 +117,7 @@ int main(int argc, char** argv)
             data->calc_t0(45,200);
             data->calc_tend(data->t0+15,1000);
             data->calc_amplitude(255,1024);
-            data->calc_integral(255,280);
+            data->calc_integral(255,265);
             data->calc_prompt(100);
             //std::cout << signal->size() << std::endl;
             tree_write->Fill();
@@ -125,7 +125,6 @@ int main(int argc, char** argv)
             //aqui printa a waveform se PRINT = true
             if(PRINT)
             {
-                
                 print_waveform(c,data,i);
                 std::cout << "Press ENTER para continuar, ou 'c' + ENTER para sair..." << std::endl;
                 std::string input;

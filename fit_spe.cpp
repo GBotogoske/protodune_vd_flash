@@ -228,8 +228,8 @@ int main(int argc, char** argv)
         }
         else
         {
-            minuit.DefineParameter(6+2*(i-2), Form("Amp_%d",i),  p[4+2*(i-1)], step, fitConfig->getParam("Anmin"), fitConfig->getParam("Anmax"));
-            minuit.DefineParameter(6+2*(i-2)+1, Form("Std_%d",i),  p[4+2*(i-1)], step, fitConfig->getParam("stdnmin"), fitConfig->getParam("stdnmax"));
+            minuit.DefineParameter(6+2*(i-2), Form("Amp_%d",i),  p[4+2*(i-2)], step, fitConfig->getParam("Anmin"), fitConfig->getParam("Anmax"));
+            minuit.DefineParameter(6+2*(i-2)+1, Form("Std_%d",i),  p[4+2*(i-2)+1], step, fitConfig->getParam("stdnmin"), fitConfig->getParam("stdnmax"));
         }     
    
     }
