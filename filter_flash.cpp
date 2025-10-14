@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 
     //abre novo arquivo
     TFile* newfile = TFile::Open(file_output.c_str(), "RECREATE");
-    std::cout << newfile << std::endl;
+    std::cout << file_output << std::endl;
 
     //abre nova TTree
     auto* tree_write = new TTree("T1", "data");

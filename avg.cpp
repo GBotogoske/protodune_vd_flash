@@ -15,7 +15,7 @@
 namespace fs = std::filesystem;
 
 //lista de canais para calcular o sinal medio
-std::vector<int> list_channel = {1050,1051,1060,1061,1070,1071,1080,1081,2030,2031,2040,2041,2050,2051,2080,2081};
+std::vector<int> list_channel = {1050,1051,1060,1061,1070,1071,1080,1081,2030,2031,2040,2041,2070,2071,2080,2081};
 
 int main(int argc, char** argv)
 {

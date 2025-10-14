@@ -15,12 +15,16 @@
 #include <my_data.hh>
 #include <utils.hh>
 
+
+//numero de picos no fit
 int Npeaks = 5;
+// se deve calcular intersecao
 bool calc_Intersection = true;
 
 TH1D* hdata = nullptr;
 double xmin, xmax;
 
+//modelo do fit (soma de gaussianas)
 double model(double* x, const double* par)
 {
     double result = 0;
@@ -50,7 +54,7 @@ double model(double* x, const double* par)
     return result;
 }
 
-// --- função χ² ---
+// --- função χ² --- (funcao de minimizacao)
 void fcn(Int_t& npar, Double_t* grad, Double_t& fval, Double_t* par, Int_t flag)
 {
     double chi2 = 0;
@@ -71,6 +75,7 @@ void fcn(Int_t& npar, Double_t* grad, Double_t& fval, Double_t* par, Int_t flag)
 int main(int argc, char** argv)
 {
     std::string file_name;
+    //base diretorio
     std::string base_dir = "/home/gabriel/Documents/protodune/data/VD/";
     std::string run_number = "null";
 
@@ -82,17 +87,17 @@ int main(int argc, char** argv)
         for (int i = 1; i < argc; ++i)
         {
             std::string arg = argv[i];
-            if (arg == "-ch" && i + 1 < argc)
+            if (arg == "-ch" && i + 1 < argc) // se o canal foi dado para calcular o spe
             {
                 this_ch = argv[i + 1];
-                run_number = get_map_spe2()[this_ch];
+                run_number = get_map_spe2()[this_ch]; // busca a run adequada desse canal
                 run_found = true;
                 break;
             }
         }
         if(run_found)
         {
-            file_name=search_file(base_dir,run_number,std::string("_spe.root"));
+            file_name=search_file(base_dir,run_number,std::string("_spe.root")); // abre o arquivo
         }
         else
         {
@@ -108,15 +113,21 @@ int main(int argc, char** argv)
     std::cout << "RUN: " << run_number << std::endl;
     std::cout << "CH: " << this_ch << std::endl;
 
+    //abre o arquivo
     TFile* file1 = TFile::Open(file_name.c_str(),"READ");
+    //abre a arvore
     TTree* tree1 = (TTree*)file1->Get("T1");
+    //criar variavel my_data para ler os dados salvos
     my_data* data = nullptr;
 
     TApplication app("app", &argc, argv);
+    //aponta variavel de leitura ao branch correto do arquivo aberto
     tree1->SetBranchAddress("Data", &data);
+    //cria histograma
     TH1D* hist = new TH1D("hist","hist",200,-280,1500);
 
     int my_channel = std::stoi(this_ch);
+    //preenche histograma com as variaveis adequadas e canal correto
     for(int i = 0; i < tree1->GetEntries(); ++i)
     {
         tree1->GetEntry(i);
@@ -125,17 +136,31 @@ int main(int argc, char** argv)
             if(data->baseline>4000 && data->baseline<5000 && data->noise<10)
                 hist->Fill(data->integral);
         }
-       
     }
+    //calcula os erros, assumindo cada bin uma distribuicao de possion
     hist->Sumw2();
     hdata = hist;
+    //pega o minimo e o maximo
     xmin = hist->GetXaxis()->GetXmin();
     xmax = hist->GetXaxis()->GetXmax();
 
-    int npars = 3*Npeaks;
+    //seta numero de paraemetros para o fit
+    int npars = 0;
+    if(Npeaks<=2)
+    {
+        npars=3*Npeaks;
+    }
+    else
+    {
+        npars=6+(Npeaks-2)*2;
+    }
+    
+    //cria a classe minuiti
     TMinuit minuit(npars);
+    //seta a funcao de minimizacao
     minuit.SetFCN(fcn);
 
+    //define os parametros inicias
     std::vector<double> p(npars); //A0,mean0,std0,meanspe,A1,sigma1,A2,sigma2....
     std::vector<double> A_i = {7700, 150, 100, 100,100,100};
     for(int i=0;i<Npeaks;i++)
@@ -160,6 +185,7 @@ int main(int argc, char** argv)
         }        
     }
 
+    //defeni os parametros inicias, steps e valores maximo e minimos    
     double step=0.1;
     for(int i=0;i<Npeaks;i++)
     {
@@ -182,32 +208,38 @@ int main(int argc, char** argv)
         }     
    
     }
-
+    
+    //faz o fit
     minuit.Migrad();
+    //calcula incerteza
     minuit.mnmnos();
-
+    //pega os parametros de fit
     std::vector<double> p_fit(npars), e_fit(npars);
     for (int i = 0; i < npars; i++)
     {
         minuit.GetParameter(i, p_fit[i], e_fit[i]);
     }
-    TF1* ffit = new TF1("ffit",[](double* x, double* p){ return model(x, p); },xmin, xmax, npars);    
+
+    //cria histograma utilizando uma initicializao lambda
+    TF1* ffit = new TF1("ffit",[](double* x, double* p){ return model(x, p); },xmin, xmax, npars);
+    //seta os parametros fitados
     ffit->SetParameters(p_fit.data());
+    //cria canvas e opcoes graficas
     TCanvas* c1 = new TCanvas("c1","Multi-Gaussian Fit",900,600);
     hist->SetTitle("Multi-Gaussian Fit;Integral [ADC];Entries");
     hist->Draw("");
     ffit->SetLineColor(kRed);
     ffit->SetLineWidth(2);
+    //desenha fit
     ffit->Draw("SAME");
 
+    //agora desenha cada gaussiana
     const int colors[6] = {kBlue, kGreen+2, kOrange+7, kViolet, kMagenta, kCyan};
     std::vector<TF1*> single_gaus;
-
     for (int i = 0; i < Npeaks; ++i)
     {
         TString name = Form("gaus_%d", i);   
         TF1* fgaus = nullptr;
-
         if(i==0)
         {
             fgaus = new TF1(name,
@@ -236,6 +268,7 @@ int main(int argc, char** argv)
         fgaus->SetLineColor(colors[i % 6]);
         fgaus->SetLineWidth(2);
         fgaus->SetLineStyle(2); // linha tracejada
+        //desenha gaussiana
         fgaus->Draw("SAME");
         single_gaus.push_back(fgaus);
     }
@@ -272,6 +305,7 @@ int main(int argc, char** argv)
         
     }
 
+    //calcula intersecao das gaussianas visinhas e desenha no plot
     if(calc_Intersection)
     {
         std::vector<Peak> peaks;
@@ -284,7 +318,8 @@ int main(int argc, char** argv)
         Peak p1 { p_fit[4], p_fit[1] + gain, p_fit[5] };
         peaks.push_back(p1);
 
-        for (int i = 2; i < Npeaks; ++i) {
+        for (int i = 2; i < Npeaks; ++i) 
+        {
             double Ai = p_fit[6 + 2*(i-2)];
             double si = p_fit[6 + 2*(i-2) + 1];
             Peak pi { Ai, p_fit[1] + i*gain, si };
@@ -292,9 +327,11 @@ int main(int argc, char** argv)
         }
 
         std::vector<double> xcuts;
-        for (int i = 0; i < Npeaks-1; ++i) {
+        for (int i = 0; i < Npeaks-1; ++i) 
+        {
             double xstar;
-            if (intersect_two(peaks[i], peaks[i+1], xstar)) {
+            if (intersect_two(peaks[i], peaks[i+1], xstar)) 
+            {
                 xcuts.push_back(xstar);
                 // desenhar linha vertical
                 auto line = new TLine(xstar, 0, xstar, hist->GetMaximum()*1.05);

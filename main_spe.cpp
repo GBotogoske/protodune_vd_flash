@@ -12,12 +12,14 @@ namespace fs = std::filesystem;
 
 #define PRINT false
 
+
+//channel list para calcular os paremetos, com oum valor default setado
 std::vector<int> ch_list={1054};
 
 int main(int argc, char** argv)
 {
-    
     std::string file_name="null";
+    //diretorio base para procurar o arquivo
     std::string base_dir = "/home/gabriel/Documents/protodune/data/VD/";
     std::string run_number = "null";
 
@@ -27,7 +29,7 @@ int main(int argc, char** argv)
         for (int i = 1; i < argc; ++i)
         {
             std::string arg = argv[i];
-            if (arg == "-run" && i + 1 < argc)
+            if (arg == "-run" && i + 1 < argc)//procurar o arquivo caso -run seja dada
             {
                 run_number = argv[i + 1];
                 run_found = true;
@@ -36,20 +38,21 @@ int main(int argc, char** argv)
         }
         if(run_found)
         {
-            file_name=search_file(base_dir,run_number,std::string("myAnalyser.root"));
+            file_name=search_file(base_dir,run_number,std::string("myAnalyser.root")); //procurar o arquivo caso -run seja dada
         }
         else
         {
-            file_name = std::string(argv[1]);
+            file_name = std::string(argv[1]); //caso contrario usar o arquivo dado
         }
-    } 
-    else 
+    }  
+    else //e caso contrario ainda, usar o nome padrao abaixo
     {
         file_name = std::string("/home/gabriel/Documents/protodune/data/VD/np02vd_raw_run039358_0000_df-s04-d0_dw_0_20250915T151645_myAnalyser.root");
     }
 
     std::cout << file_name << std::endl;
     TApplication app("app", &argc, argv);
+    //abrir arquivo para leitura
     TFile *file = TFile::Open(file_name.c_str(), "READ");
     if (!file || file->IsZombie()) 
     {
@@ -57,25 +60,30 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    //abrir ttree
     TTree *tree = (TTree*)file->Get("waveAna/waveform_tree");
     if (!tree) 
     {
         std::cerr << "Não achei a TTree no arquivo!" << std::endl;
         return 1;
     }
-
+    //pegar o numero de entradas
     int n = tree->GetEntries();
     std::cout << "O arquivo contem " << n << " entradas\n";
 
+    //variaveis de leitura
     std::vector<short>* signal = nullptr; 
     int channel;
     long time;
+    //faz as variaveis apontarem no lugar correto da arvore
     tree->SetBranchAddress("adc",&signal);
     tree->SetBranchAddress("offline_channel",&channel);
     tree->SetBranchAddress("timestamp",&time);
 
+    //cria uma class my data para salvar os paremetros
     auto data = new my_data();
 
+    //cria arquivo de saida
     std::string file_output;
     if(run_number == "null")
     {
@@ -84,15 +92,20 @@ int main(int argc, char** argv)
     else
     {   
         file_output=fs::path(file_name).parent_path() / ("data_analysed_" + run_number + "_spe.root");
+        //pega o ch_list adequado dessa run
         ch_list = get_map_spe()[run_number];
     }
     std::cout << file_output << std::endl;
     TFile* newfile = TFile::Open(file_output.c_str(), "RECREATE");
+    //cria arvore de saida
     TTree *tree_write = new TTree("T1","data");
+    //aponta corretamente o my_data 
     tree_write->Branch("Data", "my_data", &data); 
 
+    //cria canvas que vai ser usado se a opcao print estiver setada
     auto c = new TCanvas("my Canvas", "Waveforms",800,600);
 
+    //varre todas as entradas e calcula os paremetros
     for(int i=0;i<n;i++)
     {
         tree->GetEntry(i);
@@ -109,7 +122,7 @@ int main(int argc, char** argv)
             //std::cout << signal->size() << std::endl;
             tree_write->Fill();
 
-       
+            //aqui printa a waveform se PRINT = true
             if(PRINT)
             {
                 

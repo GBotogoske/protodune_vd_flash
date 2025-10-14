@@ -120,10 +120,10 @@ int main(int argc, char** argv)
     }
     else
     {   
-        file_output=fs::path(file_name).parent_path() / ("data_analysed_" + run_number + "_spe.root");
+        file_output=fs::path(file_name).parent_path() / ("data_analysed_" + run_number + "_flash.root");
     }
     TFile* newfile = TFile::Open(file_output.c_str(), "RECREATE");
-    std::cout << newfile << std::endl;
+    std::cout << file_output << std::endl;
 
     //cria arvore de saida
     auto* tree_write = new TTree("T1", "data");
