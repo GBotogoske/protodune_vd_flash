@@ -1,0 +1,11 @@
+{
+    "baseline_min": 4200,
+    "baseline_max": 4500,
+    "noise_max": 15,
+    "amplitude_min": -50,
+    "amplitude_max":60,
+    "pre_amplitude_min": -40,
+    "pre_amplitude_max":35,
+    "post_amplitude_min": -40,
+    "post_amplitude_max":50
+}

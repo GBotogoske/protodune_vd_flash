@@ -1,11 +1,13 @@
 {
     "Npeaks": 4,
-    "bins": 70,
-    "fit_min": -100,
+    "bins": 100,
+    "fit_min": -50,
     "fit_max": 450,
     "baseline_min": 0,
     "baseline_max": 8000,
     "noise_max": 10,
+    "amplitude_min": -30,
+    "amplitude_max": 100,
     "step": 0.1,
     "A0": 20000,
     "A1":18000,
@@ -19,11 +21,11 @@
     "std1": 100,
     "A0min": 10,
     "A0max": 400000,
-    "mean0min": -200,
+    "mean0min": -100,
     "mean0max": 100,
     "std0min": 10,
-    "std0max": 3000,
-    "A1min": 100,
+    "std0max": 500,
+    "A1min": 10,
     "A1max": 200000,
     "mean1min": 80,
     "mean1max": 200,
@@ -32,5 +34,5 @@
     "Anmin": 0,
     "Anmax": 0,
     "stdnmin": 0,
-    "stdnmax": 120
+    "stdnmax": 200
 }

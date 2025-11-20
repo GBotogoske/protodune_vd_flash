@@ -13,12 +13,18 @@ class my_data: public TObject
         int flash;
         float integral = 0;
         float amplitude = 0;
+        float amplitudemin = 0;
+        float preamplitude = 0;
+        float preamplitudemin = 0;
+        float postamplitude = 0;
+        float postamplitudemin = 0;
         float baseline = 0;
         float noise = 0;
         int n_peaks = 0;
         float t0 = 0;
         float tend = 0;
         float prompt=0;
+        int n_spe=0;
         
 
         void set_parameters(Int_t ch, long time, const std::vector<short>& signal);
@@ -35,6 +41,7 @@ class my_data: public TObject
 
         void calc_baseline(const int index);
         void calc_baseline(const int index1,const int index2,const int index3,const int index4);
+        void calc_baseline(const double sigma_cut, const double skip_window);
         void calc_noise(const int index);
         void calc_t0(const int index,const int index_lim);
         void calc_tend(const int index,const int index_lim);
@@ -42,7 +49,12 @@ class my_data: public TObject
         void calc_integral();
         void calc_integral(int start,int end);
         void calc_amplitude();
+        void calc_preamplitude(int start,int end);
+        void calc_preminamplitude(int start, int end);
+        void calc_postamplitude(int start,int end);
+        void calc_postminamplitude(int start, int end);
         void calc_amplitude(int start,int end);
+        void calc_minamplitude(int start, int end);
         void calc_prompt(const int index);
 
         ClassDef(my_data, 1);

@@ -143,6 +143,8 @@ int main(int argc, char** argv)
     float baseline_min = fitConfig->getParam("baseline_min");
     float baseline_max = fitConfig->getParam("baseline_max");
     float noise_max = fitConfig->getParam("noise_max");
+    float amplitude_min = fitConfig->getParam("amplitude_min");
+    float amplitude_max = fitConfig->getParam("amplitude_max");    
 
     //preenche histograma com as variaveis adequadas e canal correto
     for(int i = 0; i < tree1->GetEntries(); ++i)
@@ -151,7 +153,13 @@ int main(int argc, char** argv)
         if (data->Channel==my_channel)
         {
             if(data->baseline>baseline_min && data->baseline<baseline_max && data->noise<noise_max)
-                hist->Fill(data->integral);
+            {
+                if(data->amplitudemin>amplitude_min && data->amplitude<amplitude_max)
+                {
+                    hist->Fill(data->integral);
+                }  
+            }
+                
         }
     }
     //calcula os erros, assumindo cada bin uma distribuicao de possion
@@ -331,7 +339,7 @@ int main(int argc, char** argv)
     }
 
     //calcula intersecao das gaussianas visinhas e desenha no plot
-    if(calc_Intersection)
+    /* if(calc_Intersection)
     {
         std::vector<Peak> peaks;
         peaks.reserve(Npeaks);
@@ -380,9 +388,44 @@ int main(int argc, char** argv)
         }
         c1->SaveAs(Form("/home/gabriel/Documents/protodune/protodune_vd/light_analysis/data/FIT_SPE/%d.png", std::stoi(this_ch)));
         output_file.close();
+    } */
+
+
+    //metodo 2 , mean-sigma, mean+sigma
+
+    std::ofstream output_file(Form("/home/gabriel/Documents/protodune/protodune_vd/light_analysis/data/FIT_SPE/%d.txt", std::stoi(this_ch)));
+
+
+    double this_mean;
+    double this_sigma;
+    for(int i = 1 ; i < 4; i++)
+    {
+        this_mean = i*p_fit[3]+p_fit[1];
+        this_sigma = p_fit[6+2*(i-2)+1];
+        auto line1 = new TLine(this_mean-this_sigma, 0, this_mean-this_sigma, hist->GetMaximum()*1.05);
+        line1->SetLineStyle(3);
+        line1->SetLineColor(kGray+2);
+        line1->Draw("SAME");
+        auto lat1 = new TLatex(this_mean-this_sigma, hist->GetMaximum()*1.07, Form("x_{%d|inf}", i));
+        lat1->SetTextAlign(21);
+        lat1->SetTextSize(0.03);
+        lat1->Draw("SAME");
+        auto line2 = new TLine(this_mean+this_sigma, 0, this_mean+this_sigma, hist->GetMaximum()*1.05);
+        line2->SetLineStyle(3);
+        line2->SetLineColor(kGray+2);
+        line2->Draw("SAME");
+        auto lat2 = new TLatex(this_mean+this_sigma, hist->GetMaximum()*1.07, Form("x_{%d|sup}", i));
+        lat2->SetTextAlign(21);
+        lat2->SetTextSize(0.03);
+        lat2->Draw("SAME");
+
+        output_file << this_mean-this_sigma << "\n";
+        output_file << this_mean+this_sigma << "\n";
+     
     }
 
-
+     c1->SaveAs(Form("/home/gabriel/Documents/protodune/protodune_vd/light_analysis/data/FIT_SPE/%d.png", std::stoi(this_ch)));
+    output_file.close();
     app.Run();
     return 0;
 }

@@ -112,11 +112,16 @@ int main(int argc, char** argv)
         if (std::find(ch_list.begin(), ch_list.end(), channel) != ch_list.end()) 
         {
             data->set_parameters(channel,time,*signal);
-            data->calc_baseline(0,180,480,1024);
-            data->calc_noise(200);
+            data->calc_baseline(5.0,10.0);
+            data->calc_noise(240);
             data->calc_t0(45,200);
             data->calc_tend(data->t0+15,1000);
-            data->calc_amplitude(255,1024);
+            data->calc_amplitude(270,1023);
+            data->calc_minamplitude(300,1023);
+            data->calc_preamplitude(0,240);
+            data->calc_preminamplitude(0,240);
+            data->calc_postamplitude(350,1023);
+            data->calc_postminamplitude(350,1023);
             data->calc_integral(255,265);
             data->calc_prompt(100);
             //std::cout << signal->size() << std::endl;

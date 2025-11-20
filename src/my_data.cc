@@ -1,6 +1,9 @@
 #include "my_data.hh"
 #include <iostream>
 #include <cmath>
+#include <algorithm>
+#include <numeric>
+#include <unordered_map>
 
 ClassImp(my_data)
 
@@ -86,6 +89,51 @@ void my_data::calc_baseline(const int index1, const int index2, const int index3
         cont++;
     }
     this->baseline/=cont;
+}
+
+void my_data::calc_baseline(const double sigma_cut, const double skip_window)
+{
+    if (this->adcs.empty())
+    {
+        this->baseline = 0;
+        return;
+    }
+
+    std::unordered_map<int, int> freq;
+    for (auto val : this->adcs) 
+    {
+        freq[val]++;
+    }
+    auto max_it = std::max_element(freq.begin(), freq.end(),
+                                   [](auto& a, auto& b){ return a.second < b.second; });
+    double mode = static_cast<double>(max_it->first);
+
+    std::vector<double> valid_points;
+    double low = mode - sigma_cut;
+    double high = mode + sigma_cut;
+
+    for (size_t i = 0; i < this->adcs.size(); ++i)
+    {
+        double val = this->adcs[i];
+        if (val >= low && val <= high) 
+        {
+            valid_points.push_back(val);
+        } 
+        else 
+        {
+            // se encontrou pico, pula N bins
+            i += static_cast<size_t>(skip_window);
+        }
+    }
+
+    // 4️⃣ Média dos pontos válidos
+    if (!valid_points.empty())
+    {
+        this->baseline = std::accumulate(valid_points.begin(), valid_points.end(), 0.0) / valid_points.size();
+    } else 
+    {
+        this->baseline = mode;
+    }
 }
 
 void my_data::calc_noise(const int index)
@@ -212,6 +260,90 @@ void my_data::calc_amplitude()
     return;
 }
 
+void my_data::calc_preamplitude(int start, int end)
+{
+    this->preamplitude = -1000;
+    if(start != -1000 && end != -1000)
+    {
+        if(end >= start)
+        {
+            for(int i = start; i<=end ; i++)
+            {
+                double value = this->adcs[i]-this->baseline;
+                if(this->preamplitude < value)
+                {
+                    this->preamplitude = value;
+                }
+            }
+        }
+        
+    }
+    return;
+}
+
+void my_data::calc_preminamplitude(int start, int end)
+{
+    this->preamplitudemin = 1000;
+    if(start != -1000 && end != -1000)
+    {
+        if(end >= start)
+        {
+
+            for(int i = start; i<=end ; i++)
+            {
+                double value = this->adcs[i]-this->baseline;
+                if(this->preamplitudemin > value)
+                {
+                    this->preamplitudemin = value;
+                }
+            }
+        }
+    }
+    return;
+}
+
+void my_data::calc_postamplitude(int start, int end)
+{
+    this->postamplitude = -1000;
+    if(start != -1000 && end != -1000)
+    {
+        if(end >= start)
+        {
+            for(int i = start; i<=end ; i++)
+            {
+                double value = this->adcs[i]-this->baseline;
+                if(this->postamplitude < value)
+                {
+                    this->postamplitude = value;
+                }
+            }
+        }
+        
+    }
+    return;
+}
+
+void my_data::calc_postminamplitude(int start, int end)
+{
+    this->postamplitudemin = 1000;
+    if(start != -1000 && end != -1000)
+    {
+        if(end >= start)
+        {
+
+            for(int i = start; i<=end ; i++)
+            {
+                double value = this->adcs[i]-this->baseline;
+                if(this->postamplitudemin > value)
+                {
+                    this->postamplitudemin = value;
+                }
+            }
+        }
+    }
+    return;
+}
+
 void my_data::calc_amplitude(int start, int end)
 {
     this->amplitude = -1000;
@@ -231,8 +363,26 @@ void my_data::calc_amplitude(int start, int end)
         }
     }
     return;
+}
 
+void my_data::calc_minamplitude(int start, int end)
+{
+    this->amplitudemin = 1000;
+    if(start != -1000 && end != -1000)
+    {
+        if(end >= start)
+        {
 
+            for(int i = start; i<=end ; i++)
+            {
+                double value = this->adcs[i]-this->baseline;
+                if(this->amplitudemin > value)
+                {
+                    this->amplitudemin = value;
+                }
+            }
+        }
+    }
     return;
 }
 

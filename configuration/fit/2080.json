@@ -6,6 +6,8 @@
     "baseline_min": 0,
     "baseline_max": 8000,
     "noise_max": 7,
+    "amplitude_min": -30,
+    "amplitude_max": 100,
     "step": 0.1,
     "A0": 20000,
     "A1":18000,

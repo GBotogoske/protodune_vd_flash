@@ -3,13 +3,21 @@
 
 #include <fstream>
 
-readConfigFit::readConfigFit(int ch)
+readConfigFit::readConfigFit(int ch, int stage)
 {
     std::string file_name;
     if(ch!=-1)
     {
-        file_name = std::string("/home/gabriel/Documents/protodune/protodune_vd/light_analysis/configuration/fit/") + Form("%d.json",ch);
+        if(stage==0)
+        {
+            file_name = std::string("/home/gabriel/Documents/protodune/protodune_vd/light_analysis/configuration/fit/") + Form("%d.json",ch);
+        }
+        else
+        {
+            file_name = std::string("/home/gabriel/Documents/protodune/protodune_vd/light_analysis/configuration/fit/") + Form("%d_calc.json",ch);
+        }
     }
+       
     else
     {
         file_name = std::string("/home/gabriel/Documents/protodune/protodune_vd/light_analysis/configuration/fit/") + Form("default.json");
@@ -22,7 +30,7 @@ readConfigFit::readConfigFit(int ch)
     {
         my_params[el.key()] = el.value().get<float>();
     }
-
+    std::cout << file_name << std::endl;
     file.close();
 
 }

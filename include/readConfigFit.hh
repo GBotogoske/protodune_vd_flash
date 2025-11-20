@@ -8,7 +8,7 @@ using json = nlohmann::json;
 class readConfigFit
 {
     public:
-        readConfigFit(int ch);
+        readConfigFit(int ch, int stage=0);
         ~readConfigFit();
 
         const std::map<std::string,float> get_params(){return this->my_params;};

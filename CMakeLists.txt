@@ -65,4 +65,19 @@ target_link_libraries(avg_spe PRIVATE ${ROOT_LIBRARIES} my_data)
 add_executable(LY LY.cpp)
 target_include_directories(LY PRIVATE ${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
 target_link_libraries(LY PRIVATE ${ROOT_LIBRARIES} my_data)
+
+# Executável plot_spe_fix
+add_executable(plot_spe_fix plot_spe_fix.cpp)
+target_include_directories(plot_spe_fix PRIVATE ${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
+target_link_libraries(plot_spe_fix PRIVATE ${ROOT_LIBRARIES} my_data)
+
+# Executável avg_spe_2
+add_executable(avg_spe_2 avg_spe_2.cpp)
+target_include_directories(avg_spe_2 PRIVATE ${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
+target_link_libraries(avg_spe_2 PRIVATE ${ROOT_LIBRARIES} my_data)
+
+# Executável avg_spe_3
+add_executable(avg_spe_3 avg_spe_3.cpp)
+target_include_directories(avg_spe_3 PRIVATE ${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
+target_link_libraries(avg_spe_3 PRIVATE ${ROOT_LIBRARIES} my_data)
 #..........................................................................

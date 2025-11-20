@@ -47,7 +47,7 @@ int main(int argc, char** argv)
         if(run_found)
         {
             file_name=search_file(base_dir,run_number,std::string("_spe.root"));//abre o arquivo adequado
-            fitConfig = new readConfigFit(std::stoi(this_ch));
+            fitConfig = new readConfigFit(std::stoi(this_ch),1);
         }
         else
         {
@@ -96,6 +96,12 @@ int main(int argc, char** argv)
     float baseline_min = fitConfig->getParam("baseline_min");
     float baseline_max = fitConfig->getParam("baseline_max");
     float noise_max = fitConfig->getParam("noise_max");
+    float amplitude_min = fitConfig->getParam("amplitude_min");
+    float amplitude_max = fitConfig->getParam("amplitude_max");  
+    float pre_amplitude_min = fitConfig->getParam("pre_amplitude_min");
+    float pre_amplitude_max = fitConfig->getParam("pre_amplitude_max");      
+    float post_amplitude_min = fitConfig->getParam("post_amplitude_min");
+    float post_amplitude_max = fitConfig->getParam("post_amplitude_max");  
 
     //recarrega as seperations automaticamente:
     if(my_channel!=-1)
@@ -111,7 +117,9 @@ int main(int argc, char** argv)
         }
         data_sp.close();
     }
-            
+          
+    bool found=false;
+
     //varre o arquivo buscando o cnaal correto
     for(int i = 0; i < tree->GetEntries(); i++) 
     {
@@ -120,25 +128,34 @@ int main(int argc, char** argv)
        
         if (data->Channel==my_channel)
         {
-            if(data->baseline>baseline_min && data->baseline<baseline_max && data->noise<noise_max) // && data->amplitude<100)
+            if(data->baseline>baseline_min && data->baseline<baseline_max && data->noise<noise_max && data->amplitude<amplitude_max && data->amplitudemin>amplitude_min 
+                && data->preamplitude < pre_amplitude_max && data->preamplitudemin > pre_amplitude_min && data->postamplitude < post_amplitude_max && data->postamplitudemin > post_amplitude_min )
             {
-                double integral=data->integral;
-                if(!(integral<separation[0] || integral>separation[separation.size()-1]))//garante o numero do pico photon eletron aqui
+                double integral = data->integral;
+                found = false;
+               if (!(integral < separation.front() || integral > separation.back()))
                 {
-                    int norm;
-                    for(norm=0;norm<separation.size()-1;norm++)
+                    int norm = 0;
+                    for (norm = 0; norm < (int)separation.size() - 1; norm=norm+2)
                     {
-                        if(integral>separation[norm] && integral<separation[norm+1])
+                        if (integral > separation[norm] && integral < separation[norm + 1])
                         {
+                            found = true;
                             break;
                         }
+                            
                     }
-                    norm=norm+1;
-                    norm_ch+=norm;
-                    for (int k = 0; k < data->adcs.size(); k++)
+                    if(found)
                     {
-                        signal[k] += (data->adcs[k] - data->baseline);
+                        norm = 1 + norm / 2;
+                        norm_ch++;
+
+                        for (int k = 0; k < (int)data->adcs.size(); k++)
+                        {
+                            signal[k]+=(data->adcs[k] - data->baseline) / norm;
+                        }
                     }
+                    
                 }
             }    
         }         
